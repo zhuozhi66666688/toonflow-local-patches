@@ -2,6 +2,12 @@
 
 用于在 ToonFlow 升级或数据文件被覆盖后，恢复本机定制：
 
+公共仓库：
+
+```text
+https://github.com/zhuozhi66666688/toonflow-local-patches
+```
+
 - 9router 自动路由：普通请求使用 `planner-best`，工具调用使用 `claude_kr`
 - 9router Grok Video vendor、桥接与生产 Skill
 - 顶层及子级 `scriptAgent`、`productionAgent` 模型配置
@@ -34,10 +40,10 @@ open -a "/Applications/Comfy Desktop.app"
 配置发生变更后，重新生成仓库快照：
 
 ```bash
-./snapshot-config.sh
-git add .
-git commit -m "Update ToonFlow local configuration snapshot"
+./publish.sh "Update ToonFlow local configuration snapshot"
 ```
+
+`publish.sh` 会依次执行安全快照、密钥排除、文件校验、Git 提交与公共仓库推送。
 
 ## 安全说明
 
