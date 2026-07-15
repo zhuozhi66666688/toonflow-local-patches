@@ -11105,7 +11105,7 @@
       ],
       "color": "#6d3412",
       "widgets_values": [
-        "qwen_3_8b.safetensors",
+        "qwen_3_8b_fp8mixed.safetensors",
         "flux2",
         "default"
       ],
@@ -11809,7 +11809,7 @@
       ],
       "color": "#6d3412",
       "widgets_values": [
-        "qwen_3_8b.safetensors",
+        "qwen_3_8b_fp8mixed.safetensors",
         "flux2",
         "default"
       ],
@@ -12034,7 +12034,7 @@
       ],
       "color": "#6d3412",
       "widgets_values": [
-        "qwen_3_8b.safetensors",
+        "qwen_3_8b_fp8mixed.safetensors",
         "flux2",
         "default"
       ],
@@ -12259,7 +12259,7 @@
       ],
       "color": "#6d3412",
       "widgets_values": [
-        "qwen_3_8b.safetensors",
+        "qwen_3_8b_fp8mixed.safetensors",
         "flux2",
         "default"
       ],
@@ -12484,7 +12484,7 @@
       ],
       "color": "#6d3412",
       "widgets_values": [
-        "qwen_3_8b.safetensors",
+        "qwen_3_8b_fp8mixed.safetensors",
         "flux2",
         "default"
       ],
@@ -12709,7 +12709,7 @@
       ],
       "color": "#6d3412",
       "widgets_values": [
-        "qwen_3_8b.safetensors",
+        "qwen_3_8b_fp8mixed.safetensors",
         "flux2",
         "default"
       ],

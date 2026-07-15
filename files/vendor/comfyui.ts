@@ -121,7 +121,8 @@ const moodyImageRequest = async (config: ImageConfig): Promise<string> => {
   let height = landscape ? roundTo16((longSide * ratioHeight) / ratioWidth) : longSide;
   if (isTurnaround) {
     width = Math.max(longSide, 768);
-    height = roundTo16(width * 0.5);
+    // Give four vertical panels enough horizontal room; 2:1 often collapses into a triptych.
+    height = roundTo16(width * 0.375);
     seedResolution = Math.max(seedResolution, 1152);
     seedMaxResolution = Math.max(seedMaxResolution, 2304);
   }
@@ -139,10 +140,10 @@ const moodyImageRequest = async (config: ImageConfig): Promise<string> => {
         .replace(/character\s+turnaround/gi, "character sheet")
     : config.prompt;
   const turnaroundConstraint = isTurnaround
-    ? "严格生成一张横向四栏角色设定图，总共只能出现四个人物图像，不是传统的正反左右四视图。四张图总数必须等于四，从左到右依次为：第一栏一张人像特写；第二栏一张完整正视全身；第三栏一张完整左侧视全身；第四栏一张完整后视全身。全身图总共只能三张，侧视图总共只能一张。禁止生成右侧视图，禁止同时生成左右两个侧面，禁止第五个人物。三张全身图等高、等比例、头脚完整、互不遮挡、间距均匀、身份和服装完全一致。 Exactly four人物 images total: one close-up plus exactly three full-body views. Use front, left profile and back only. Never add a right profile or a fifth person. "
+    ? "严格生成一张超宽横向四栏角色设定图，画布分成四个等宽竖向栏位，four equal vertical panels，4-column contact sheet，not a triptych。总共只能出现四个人物图像，不是传统的正反左右四视图。四张图总数必须等于四，从左到右固定为：第一栏一张正面人像特写；第二栏一张0度完整正视全身；第三栏一张90度完整左侧视全身；第四栏一张180度完整后视全身。第二栏正视全身不可省略，人物必须正对镜头，双眼和双肩正对镜头。全身图总共只能三张，侧视图总共只能一张。禁止三栏构图，禁止缺少第二栏，禁止用侧视图替代正视图，禁止生成右侧视图，禁止同时生成左右两个侧面，禁止第五个人物。三张全身图等高、等比例、头脚完整、互不遮挡、间距均匀、身份和服装完全一致。 Exactly four character images total in four equal columns: front close-up, full-body front view, full-body left profile, full-body back view. The second panel must be a frontal full-body view facing the camera. Never output only three panels, never omit the front full-body view, never duplicate a profile, never add a right profile or a fifth person. "
     : "";
   const generationPrompt = `${turnaroundConstraint}${normalizedPrompt}`;
-  const negativePrompt = `泛黄，模糊，低分辨率，低质量图像，诡异的外观，多余手臂，多余腿部，丑陋，噪点，网格感，JPEG压缩条纹，水印，乱码，意义不明的字符${isTurnaround ? "，三栏，五栏，第五个人物，缺少正视图，右侧视图，左右两个侧面，重复视角，重复侧视图，裁切脚部，人物互相遮挡" : ""}`;
+  const negativePrompt = `泛黄，模糊，低分辨率，低质量图像，诡异的外观，多余手臂，多余腿部，丑陋，噪点，网格感，JPEG压缩条纹，水印，乱码，意义不明的字符${isTurnaround ? "，三栏，三联画，triptych，五栏，第五个人物，缺少第二栏，缺少正视全身图，右侧视图，左右两个侧面，重复视角，重复侧视图，侧脸代替正脸，裁切脚部，人物互相遮挡" : ""}`;
 
   const prompt: Record<string, any> = {
     "1": {
@@ -398,7 +399,7 @@ const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
     },
     "3": {
       class_type: "CLIPLoader",
-      inputs: { clip_name: "qwen_3_8b.safetensors", type: "flux2", device: "default" },
+      inputs: { clip_name: "qwen_3_8b_fp8mixed.safetensors", type: "flux2", device: "default" },
     },
     "4": {
       class_type: "VAELoader",
