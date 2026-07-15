@@ -11,7 +11,7 @@ https://github.com/zhuozhi66666688/toonflow-local-patches
 - 9router 自动路由：普通请求使用 `planner-best`，工具调用使用 `claude_kr`
 - 9router Grok Video vendor、桥接与生产 Skill
 - 顶层及子级 `scriptAgent`、`productionAgent` 模型配置
-- ComfyUI Moody ZIB+ZIT 双模型文生图
+- ComfyUI Moody ZIB+ZIT 双模型文生图（保留为手动可选）
 - Ultimate SD Upscale 与 SeedVR2 高清放大
 - ComfyUI 工作流 `YZ金鱼-Moody ZIB+ZIT Mac适配测试版.json`
 - FLUX2 Klein 9B FP8 单图与多图参考编辑，最多串联 6 张参考图

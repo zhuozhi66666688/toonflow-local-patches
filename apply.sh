@@ -59,6 +59,12 @@ fi
 if [[ -f "${DB}" ]]; then
   cp "${DB}" "${BACKUP}/db2.sqlite"
   "${ROOT}/restore-config.sh"
+  sqlite3 "${DB}" "
+    UPDATE o_project
+    SET imageModel = 'comfyui:flux2-klein-9b-text-local'
+    WHERE imageModel IS NULL
+       OR imageModel = '';
+  "
 fi
 
 print "补丁已恢复。"
