@@ -50,6 +50,12 @@ if [[ -d "${COMFY_ROOT}" ]]; then
     --backup-dir "${BACKUP}/comfyui-fp8-mps"
 fi
 
+if [[ -f "${DATA}/serve/app.js" ]]; then
+  python3 "${ROOT}/files/toonflow-patches/patch_derived_assets_reference.py" \
+    --target "${DATA}/serve/app.js" \
+    --backup-dir "${BACKUP}/serve"
+fi
+
 if [[ -f "${DB}" ]]; then
   cp "${DB}" "${BACKUP}/db2.sqlite"
   "${ROOT}/restore-config.sh"
