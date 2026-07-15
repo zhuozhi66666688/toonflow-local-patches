@@ -142,8 +142,11 @@ const moodyImageRequest = async (config: ImageConfig): Promise<string> => {
   const turnaroundConstraint = isTurnaround
     ? "严格生成一张超宽横向四栏角色设定图，画布分成四个等宽竖向栏位，four equal vertical panels，4-column contact sheet，not a triptych。总共只能出现四个人物图像，不是传统的正反左右四视图。四张图总数必须等于四，从左到右固定为：第一栏一张正面人像特写；第二栏一张0度完整正视全身；第三栏一张90度完整左侧视全身；第四栏一张180度完整后视全身。第二栏正视全身不可省略，人物必须正对镜头，双眼和双肩正对镜头。全身图总共只能三张，侧视图总共只能一张。禁止三栏构图，禁止缺少第二栏，禁止用侧视图替代正视图，禁止生成右侧视图，禁止同时生成左右两个侧面，禁止第五个人物。三张全身图等高、等比例、头脚完整、互不遮挡、间距均匀、身份和服装完全一致。 Exactly four character images total in four equal columns: front close-up, full-body front view, full-body left profile, full-body back view. The second panel must be a frontal full-body view facing the camera. Never output only three panels, never omit the front full-body view, never duplicate a profile, never add a right profile or a fifth person. "
     : "";
-  const generationPrompt = `${turnaroundConstraint}${normalizedPrompt}`;
-  const negativePrompt = `泛黄，模糊，低分辨率，低质量图像，诡异的外观，多余手臂，多余腿部，丑陋，噪点，网格感，JPEG压缩条纹，水印，乱码，意义不明的字符${isTurnaround ? "，三栏，三联画，triptych，五栏，第五个人物，缺少第二栏，缺少正视全身图，右侧视图，左右两个侧面，重复视角，重复侧视图，侧脸代替正脸，裁切脚部，人物互相遮挡" : ""}`;
+  const sceneExposureConstraint = isSceneTask
+    ? "保持影视级正常曝光，即使是黄昏、夜景或昏暗室内，主体结构、墙面纹理、家具与暗部细节也必须清晰可辨。允许氛围偏暗，但禁止整体欠曝，禁止黑场，禁止蓝紫色蒙层，禁止灰雾覆盖，禁止低对比度发灰。 "
+    : "";
+  const generationPrompt = `${turnaroundConstraint}${sceneExposureConstraint}${normalizedPrompt}`;
+  const negativePrompt = `泛黄，模糊，低分辨率，低质量图像，诡异的外观，多余手臂，多余腿部，丑陋，噪点，网格感，JPEG压缩条纹，水印，乱码，意义不明的字符${isTurnaround ? "，三栏，三联画，triptych，五栏，第五个人物，缺少第二栏，缺少正视全身图，右侧视图，左右两个侧面，重复视角，重复侧视图，侧脸代替正脸，裁切脚部，人物互相遮挡" : ""}${isSceneTask ? "，整体欠曝，黑场，死黑暗部，蓝紫色蒙层，灰雾覆盖，低对比度发灰，主体不可辨" : ""}`;
 
   const prompt: Record<string, any> = {
     "1": {
