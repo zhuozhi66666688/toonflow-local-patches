@@ -138,6 +138,15 @@
         "mode": [
           "text"
         ]
+      },
+      {
+        "name": "FLUX2 Klein 9B Reference Local",
+        "modelName": "flux2-klein-9b-reference-local",
+        "type": "image",
+        "mode": [
+          "singleImage",
+          "multiReference"
+        ]
       }
     ],
     "enable": 1

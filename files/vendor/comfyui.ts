@@ -1,6 +1,6 @@
 /**
- * Local ComfyUI Moody ZIB+ZIT provider for ToonFlow.
- * @version 2.0
+ * Local ComfyUI image providers for ToonFlow.
+ * @version 3.0
  */
 
 interface TextModel {
@@ -73,10 +73,10 @@ declare const exports: {
 
 const vendor: VendorConfig = {
   id: "comfyui",
-  version: "2.0",
+  version: "3.0",
   author: "Local",
   name: "ComfyUI Local",
-  description: "调用本机 ComfyUI，以 Moody ZIB+ZIT 双模型生图；角色自动启用 SeedVR2，场景和道具默认关闭。",
+  description: "调用本机 ComfyUI；Moody 负责文生图，FLUX2 Klein 9B 负责单图与多图参考编辑。",
   inputs: [
     { key: "baseUrl", label: "ComfyUI 地址", type: "url", required: true, placeholder: "http://127.0.0.1:8188" },
   ],
@@ -85,6 +85,7 @@ const vendor: VendorConfig = {
   },
   models: [
     { name: "Moody ZIB+ZIT Local", modelName: "moody-zib-zit-local", type: "image", mode: ["text"] },
+    { name: "FLUX2 Klein 9B Reference Local", modelName: "flux2-klein-9b-reference-local", type: "image", mode: ["singleImage", "multiReference"] },
   ],
 };
 
@@ -92,7 +93,7 @@ const textRequest = () => {
   throw new Error("ComfyUI Local 不提供文本模型");
 };
 
-const imageRequest = async (config: ImageConfig): Promise<string> => {
+const moodyImageRequest = async (config: ImageConfig): Promise<string> => {
   const baseUrl = vendor.inputValues.baseUrl.replace(/\/+$/, "");
   const isCharacterTask = /(角色标准|角色设定|角色描述|人物角色|人物设定|人物形象|人像特写|四视图|正视图.*侧视图.*后视图|character\s+(?:sheet|design|turnaround)|portrait\s+sheet)/i.test(config.prompt);
   const isSceneTask = /(场景设定|场景描述|场景图|环境设定|环境概念图|地点设定|scene\s+(?:design|sheet|concept)|environment\s+(?:design|concept)|location\s+design)/i.test(config.prompt);
@@ -358,6 +359,166 @@ const imageRequest = async (config: ImageConfig): Promise<string> => {
   if (result.error) throw new Error(result.error);
   if (!result.data) throw new Error("ComfyUI 未返回图片");
   return await urlToBase64(result.data);
+};
+
+const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
+  const baseUrl = vendor.inputValues.baseUrl.replace(/\/+$/, "");
+  const references = (config.referenceList || [])
+    .filter((item) => item.type === "image" && item.base64)
+    .slice(0, 6)
+    .map((item) => item.base64.replace(/^data:[^;,]+;base64,/, ""));
+
+  if (!references.length) {
+    throw new Error("FLUX2 Klein 9B Reference Local 至少需要一张参考图");
+  }
+
+  const ratioParts = String(config.aspectRatio || "16:9").split(":").map(Number);
+  const ratioWidth = ratioParts[0] > 0 ? ratioParts[0] : 16;
+  const ratioHeight = ratioParts[1] > 0 ? ratioParts[1] : 9;
+  const longSideMap: Record<string, number> = { "1K": 1024, "2K": 1280, "4K": 1536 };
+  const longSide = longSideMap[config.size] || 1024;
+  const roundTo16 = (value: number) => Math.max(512, Math.round(value / 16) * 16);
+  const landscape = ratioWidth >= ratioHeight;
+  const width = landscape ? longSide : roundTo16((longSide * ratioWidth) / ratioHeight);
+  const height = landscape ? roundTo16((longSide * ratioHeight) / ratioWidth) : longSide;
+  const steps = references.length >= 5 ? 6 : references.length >= 3 ? 5 : 4;
+  const randomSeed = () => Math.floor(Math.random() * 9007199254740990);
+  const referenceInstruction = references.length === 1
+    ? "以图1为主要参考，严格保持人物身份、五官、脸型、发型、肤色和身体比例，仅执行提示词要求的变化。"
+    : `使用图1至图${references.length}作为参考，保持人物身份与各参考元素的一致性，只按提示词组合和修改画面。`;
+
+  const prompt: Record<string, any> = {
+    "1": {
+      class_type: "SaveImage",
+      inputs: { filename_prefix: "ToonFlow/flux2-klein-9b-reference", images: ["13", 0] },
+    },
+    "2": {
+      class_type: "UNETLoader",
+      inputs: { unet_name: "flux-2-klein-9b-fp8.safetensors", weight_dtype: "default" },
+    },
+    "3": {
+      class_type: "CLIPLoader",
+      inputs: { clip_name: "qwen_3_8b.safetensors", type: "flux2", device: "default" },
+    },
+    "4": {
+      class_type: "VAELoader",
+      inputs: { vae_name: "flux2-vae.safetensors" },
+    },
+    "5": {
+      class_type: "CLIPTextEncode",
+      inputs: { text: `${referenceInstruction}\n${config.prompt}`, clip: ["3", 0] },
+    },
+    "6": {
+      class_type: "ConditioningZeroOut",
+      inputs: { conditioning: ["5", 0] },
+    },
+    "7": {
+      class_type: "EmptyFlux2LatentImage",
+      inputs: { width, height, batch_size: 1 },
+    },
+    "8": {
+      class_type: "RandomNoise",
+      inputs: { noise_seed: randomSeed() },
+    },
+    "10": {
+      class_type: "KSamplerSelect",
+      inputs: { sampler_name: "euler" },
+    },
+    "11": {
+      class_type: "Flux2Scheduler",
+      inputs: { steps, width, height },
+    },
+    "12": {
+      class_type: "SamplerCustomAdvanced",
+      inputs: {
+        noise: ["8", 0],
+        guider: ["9", 0],
+        sampler: ["10", 0],
+        sigmas: ["11", 0],
+        latent_image: ["7", 0],
+      },
+    },
+    "13": {
+      class_type: "VAEDecode",
+      inputs: { samples: ["12", 0], vae: ["4", 0] },
+    },
+  };
+
+  let conditioning: [string, number] = ["5", 0];
+  references.forEach((base64, index) => {
+    const offset = 20 + index * 4;
+    const loadId = String(offset);
+    const scaleId = String(offset + 1);
+    const encodeId = String(offset + 2);
+    const referenceId = String(offset + 3);
+    prompt[loadId] = {
+      class_type: "easy loadImageBase64",
+      inputs: { base64_data: base64, image_output: "Hide", save_prefix: `ToonFlow/flux2-reference-${index + 1}` },
+    };
+    prompt[scaleId] = {
+      class_type: "ImageScaleToTotalPixels",
+      inputs: { image: [loadId, 0], upscale_method: "lanczos", megapixels: 1, resolution_steps: 1 },
+    };
+    prompt[encodeId] = {
+      class_type: "VAEEncode",
+      inputs: { pixels: [scaleId, 0], vae: ["4", 0] },
+    };
+    prompt[referenceId] = {
+      class_type: "ReferenceLatent",
+      inputs: { conditioning, latent: [encodeId, 0] },
+    };
+    conditioning = [referenceId, 0];
+  });
+
+  prompt["9"] = {
+    class_type: "CFGGuider",
+    inputs: { model: ["2", 0], positive: conditioning, negative: ["6", 0], cfg: 1 },
+  };
+
+  const createResponse = await fetch(`${baseUrl}/prompt`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, client_id: `toonflow-flux2-${Date.now()}` }),
+  });
+  if (!createResponse.ok) throw new Error(`ComfyUI 创建 FLUX2 任务失败: ${await createResponse.text()}`);
+  const createData = await createResponse.json();
+  if (!createData.prompt_id) throw new Error("ComfyUI 未返回 prompt_id");
+
+  const result = await pollTask(
+    async (): Promise<PollResult> => {
+      const historyResponse = await fetch(`${baseUrl}/history/${createData.prompt_id}`);
+      if (!historyResponse.ok) throw new Error(`ComfyUI 查询 FLUX2 任务失败: ${await historyResponse.text()}`);
+      const history = await historyResponse.json();
+      const task = history[createData.prompt_id];
+      if (!task) return { completed: false };
+      if (task.status?.status_str === "error") {
+        const message = task.status?.messages?.find((item: any[]) => item[0] === "execution_error")?.[1]?.exception_message;
+        return { completed: true, error: message || "FLUX2 Klein 9B 生图失败" };
+      }
+      const images = Object.values(task.outputs || {}).flatMap((output: any) => output.images || []);
+      if (!images.length) return { completed: false };
+      const image = images[0] as any;
+      const query = [
+        `filename=${encodeURIComponent(image.filename)}`,
+        `subfolder=${encodeURIComponent(image.subfolder || "")}`,
+        `type=${encodeURIComponent(image.type || "output")}`,
+      ].join("&");
+      return { completed: true, data: `${baseUrl}/view?${query}` };
+    },
+    1500,
+    1800000,
+  );
+
+  if (result.error) throw new Error(result.error);
+  if (!result.data) throw new Error("ComfyUI 未返回 FLUX2 图片");
+  return await urlToBase64(result.data);
+};
+
+const imageRequest = async (config: ImageConfig, model: ImageModel): Promise<string> => {
+  if (model.modelName === "flux2-klein-9b-reference-local") {
+    return await flux2KleinImageRequest(config);
+  }
+  return await moodyImageRequest(config);
 };
 
 const videoRequest = async (): Promise<string> => "";

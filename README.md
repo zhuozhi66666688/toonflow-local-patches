@@ -14,6 +14,8 @@ https://github.com/zhuozhi66666688/toonflow-local-patches
 - ComfyUI Moody ZIB+ZIT 双模型文生图
 - Ultimate SD Upscale 与 SeedVR2 高清放大
 - ComfyUI 工作流 `YZ金鱼-Moody ZIB+ZIT Mac适配测试版.json`
+- FLUX2 Klein 9B FP8 单图与多图参考编辑，最多串联 6 张参考图
+- ComfyUI 工作流 `YZ金鱼-Flux2+Klein+超级多合一_Mac适配版.json`
 - 全部供应商模型与地址配置
 - 全部 Agent 部署配置
 - Skill 列表、Skill 绑定与系统设置
@@ -58,6 +60,7 @@ open -a "/Applications/Comfy Desktop.app"
 ```text
 ~/ComfyUI-Installs/ComfyUI/ComfyUI/user/default/workflows/
 YZ金鱼-Moody ZIB+ZIT Mac适配测试版.json
+YZ金鱼-Flux2+Klein+超级多合一_Mac适配版.json
 ```
 
 在 ComfyUI 左侧“工作流”中即可找到。

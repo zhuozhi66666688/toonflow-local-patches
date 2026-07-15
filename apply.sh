@@ -37,6 +37,9 @@ if [[ -d "${COMFY_WORKFLOWS}" ]]; then
   cp \
     "${ROOT}/files/comfyui-workflows/YZ金鱼-Moody ZIB+ZIT Mac适配测试版.json" \
     "${COMFY_WORKFLOWS}/YZ金鱼-Moody ZIB+ZIT Mac适配测试版.json"
+  cp \
+    "${ROOT}/files/comfyui-workflows/YZ金鱼-Flux2+Klein+超级多合一_Mac适配版.json" \
+    "${COMFY_WORKFLOWS}/YZ金鱼-Flux2+Klein+超级多合一_Mac适配版.json"
 fi
 
 if [[ -f "${DB}" ]]; then
