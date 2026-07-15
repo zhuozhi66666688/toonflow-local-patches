@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="${0:A:h}"
 DATA="${HOME}/Library/Application Support/toonflow/data"
 DB="${DATA}/db2.sqlite"
+COMFY_ROOT="${HOME}/ComfyUI-Installs/ComfyUI/ComfyUI"
 COMFY_WORKFLOWS="${HOME}/ComfyUI-Installs/ComfyUI/ComfyUI/user/default/workflows"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP="${DATA}/local-patch-backups/${STAMP}"
@@ -40,6 +41,13 @@ if [[ -d "${COMFY_WORKFLOWS}" ]]; then
   cp \
     "${ROOT}/files/comfyui-workflows/YZ金鱼-Flux2+Klein+超级多合一_Mac适配版.json" \
     "${COMFY_WORKFLOWS}/YZ金鱼-Flux2+Klein+超级多合一_Mac适配版.json"
+fi
+
+if [[ -d "${COMFY_ROOT}" ]]; then
+  python3 "${ROOT}/files/comfyui-patches/patch_comfy_mps_fp8_full.py" \
+    --root "${COMFY_ROOT}" \
+    --deep \
+    --backup-dir "${BACKUP}/comfyui-fp8-mps"
 fi
 
 if [[ -f "${DB}" ]]; then

@@ -76,7 +76,7 @@ const vendor: VendorConfig = {
   version: "3.0",
   author: "Local",
   name: "ComfyUI Local",
-  description: "调用本机 ComfyUI；Moody 负责文生图，FLUX2 Klein 9B 负责单图与多图参考编辑。",
+  description: "调用本机 ComfyUI；Moody 负责文生图，FLUX2 Klein 9B FP8 + Detail LoRA 负责高细节文生图及参考编辑。",
   inputs: [
     { key: "baseUrl", label: "ComfyUI 地址", type: "url", required: true, placeholder: "http://127.0.0.1:8188" },
   ],
@@ -85,8 +85,8 @@ const vendor: VendorConfig = {
   },
   models: [
     { name: "Moody ZIB+ZIT Local", modelName: "moody-zib-zit-local", type: "image", mode: ["text"] },
-    { name: "FLUX2 Klein 9B Text Local", modelName: "flux2-klein-9b-text-local", type: "image", mode: ["text"] },
-    { name: "FLUX2 Klein 9B Reference Local", modelName: "flux2-klein-9b-reference-local", type: "image", mode: ["singleImage", "multiReference"] },
+    { name: "FLUX2 Klein 9B Detail Text Local", modelName: "flux2-klein-9b-text-local", type: "image", mode: ["text"] },
+    { name: "FLUX2 Klein 9B Detail Reference Local", modelName: "flux2-klein-9b-reference-local", type: "image", mode: ["singleImage", "multiReference"] },
   ],
 };
 
@@ -366,8 +366,22 @@ const moodyImageRequest = async (config: ImageConfig): Promise<string> => {
   return await urlToBase64(result.data);
 };
 
+const FLUX2_DETAIL_LORA = "flux2_klein_9b_srx_detail_lora.safetensors";
+const FLUX2_DETAIL_STRENGTH = 0.75;
+const withFlux2Detail = (prompt: string): string =>
+  `srx_detail, refined natural micro-details, clean textures, no over-sharpening, no exaggerated pores, no gritty skin texture. ${prompt}`;
+const flux2SeedVR2Policy = (prompt: string): boolean => {
+  const isCharacterTask = /(角色标准|角色设定|角色描述|人物角色|人物设定|人物形象|人像|肖像|孕妇|变老|老人|男性|女性|男人|女人|男孩|女孩|character|portrait|person|woman|man|girl|boy)/i.test(prompt);
+  const isSceneTask = /(场景|环境|地点|建筑|房间|室内|室外|scene|environment|location|architecture|room)/i.test(prompt);
+  const isPropTask = /(道具|物品|武器|车辆|产品|prop|object|weapon|vehicle|product)/i.test(prompt);
+  const forceEnable = /((需要|开启|启用|使用|进行).{0,6}(高清放大|SeedVR2)|高清场景|场景高清)/i.test(prompt);
+  const forceDisable = /((不需要|不要|关闭|禁用|无需).{0,6}(高清放大|SeedVR2))/i.test(prompt);
+  return !forceDisable && (forceEnable || (isCharacterTask && !isSceneTask && !isPropTask));
+};
+
 const flux2KleinTextRequest = async (config: ImageConfig): Promise<string> => {
   const baseUrl = vendor.inputValues.baseUrl.replace(/\/+$/, "");
+  const enableSeedVR2Upscale = flux2SeedVR2Policy(config.prompt);
 
   const ratioParts = String(config.aspectRatio || "1:1").split(":").map(Number);
   const ratioWidth = ratioParts[0] > 0 ? ratioParts[0] : 1;
@@ -378,13 +392,20 @@ const flux2KleinTextRequest = async (config: ImageConfig): Promise<string> => {
   const landscape = ratioWidth >= ratioHeight;
   const width = landscape ? longSide : roundTo16((longSide * ratioWidth) / ratioHeight);
   const height = landscape ? roundTo16((longSide * ratioHeight) / ratioWidth) : longSide;
-  const steps = 4;
+  const steps = 5;
+  const seedResolutionMap: Record<string, [number, number]> = {
+    "1K": [1024, 1536],
+    "2K": [1536, 2304],
+    "4K": [2048, 3072],
+  };
+  const [seedResolution, seedMaxResolution] = seedResolutionMap[config.size] || seedResolutionMap["1K"];
   const randomSeed = () => Math.floor(Math.random() * 9007199254740990);
+  const randomSeed32 = () => Math.floor(Math.random() * 4294967296);
 
   const prompt: Record<string, any> = {
     "1": {
       class_type: "SaveImage",
-      inputs: { filename_prefix: "ToonFlow/flux2-klein-9b-text", images: ["13", 0] },
+      inputs: { filename_prefix: "ToonFlow/flux2-klein-9b-text", images: [enableSeedVR2Upscale ? "17" : "13", 0] },
     },
     "2": {
       class_type: "UNETLoader",
@@ -400,7 +421,7 @@ const flux2KleinTextRequest = async (config: ImageConfig): Promise<string> => {
     },
     "5": {
       class_type: "CLIPTextEncode",
-      inputs: { text: config.prompt, clip: ["3", 0] },
+      inputs: { text: withFlux2Detail(config.prompt), clip: ["3", 0] },
     },
     "6": {
       class_type: "ConditioningZeroOut",
@@ -416,7 +437,7 @@ const flux2KleinTextRequest = async (config: ImageConfig): Promise<string> => {
     },
     "9": {
       class_type: "CFGGuider",
-      inputs: { model: ["2", 0], positive: ["5", 0], negative: ["6", 0], cfg: 1 },
+      inputs: { model: ["14", 0], positive: ["5", 0], negative: ["6", 0], cfg: 1 },
     },
     "10": {
       class_type: "KSamplerSelect",
@@ -439,6 +460,58 @@ const flux2KleinTextRequest = async (config: ImageConfig): Promise<string> => {
     "13": {
       class_type: "VAEDecode",
       inputs: { samples: ["12", 0], vae: ["4", 0] },
+    },
+    "14": {
+      class_type: "LoraLoaderModelOnly",
+      inputs: { model: ["2", 0], lora_name: FLUX2_DETAIL_LORA, strength_model: FLUX2_DETAIL_STRENGTH },
+    },
+    "15": {
+      class_type: "SeedVR2LoadVAEModel",
+      inputs: {
+        model: "ema_vae_fp16.safetensors",
+        device: "mps",
+        encode_tiled: true,
+        encode_tile_size: 768,
+        encode_tile_overlap: 96,
+        decode_tiled: true,
+        decode_tile_size: 768,
+        decode_tile_overlap: 96,
+        tile_debug: "false",
+        offload_device: "none",
+        cache_model: false,
+      },
+    },
+    "16": {
+      class_type: "SeedVR2LoadDiTModel",
+      inputs: {
+        model: "seedvr2_ema_7b-Q4_K_M.gguf",
+        device: "mps",
+        blocks_to_swap: 0,
+        swap_io_components: false,
+        offload_device: "none",
+        cache_model: false,
+        attention_mode: "sdpa",
+      },
+    },
+    "17": {
+      class_type: "SeedVR2VideoUpscaler",
+      inputs: {
+        seed: randomSeed32(),
+        resolution: seedResolution,
+        max_resolution: seedMaxResolution,
+        batch_size: 1,
+        uniform_batch_size: false,
+        color_correction: "lab",
+        temporal_overlap: 0,
+        prepend_frames: 0,
+        input_noise_scale: 0.1,
+        latent_noise_scale: 0,
+        offload_device: "none",
+        enable_debug: false,
+        image: ["13", 0],
+        dit: ["16", 0],
+        vae: ["15", 0],
+      },
     },
   };
 
@@ -483,6 +556,7 @@ const flux2KleinTextRequest = async (config: ImageConfig): Promise<string> => {
 
 const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
   const baseUrl = vendor.inputValues.baseUrl.replace(/\/+$/, "");
+  const enableSeedVR2Upscale = flux2SeedVR2Policy(config.prompt);
   const references = (config.referenceList || [])
     .filter((item) => item.type === "image" && item.base64)
     .slice(0, 6)
@@ -501,8 +575,15 @@ const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
   const landscape = ratioWidth >= ratioHeight;
   const width = landscape ? longSide : roundTo16((longSide * ratioWidth) / ratioHeight);
   const height = landscape ? roundTo16((longSide * ratioHeight) / ratioWidth) : longSide;
-  const steps = references.length >= 5 ? 6 : references.length >= 3 ? 5 : 4;
+  const steps = references.length >= 3 ? 6 : 5;
+  const seedResolutionMap: Record<string, [number, number]> = {
+    "1K": [1024, 1536],
+    "2K": [1536, 2304],
+    "4K": [2048, 3072],
+  };
+  const [seedResolution, seedMaxResolution] = seedResolutionMap[config.size] || seedResolutionMap["1K"];
   const randomSeed = () => Math.floor(Math.random() * 9007199254740990);
+  const randomSeed32 = () => Math.floor(Math.random() * 4294967296);
   const referenceInstruction = references.length === 1
     ? "以图1为主要参考，严格保持人物身份、五官、脸型、发型、肤色和身体比例，仅执行提示词要求的变化。"
     : `使用图1至图${references.length}作为参考，保持人物身份与各参考元素的一致性，只按提示词组合和修改画面。`;
@@ -510,7 +591,7 @@ const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
   const prompt: Record<string, any> = {
     "1": {
       class_type: "SaveImage",
-      inputs: { filename_prefix: "ToonFlow/flux2-klein-9b-reference", images: ["13", 0] },
+      inputs: { filename_prefix: "ToonFlow/flux2-klein-9b-reference", images: [enableSeedVR2Upscale ? "92" : "13", 0] },
     },
     "2": {
       class_type: "UNETLoader",
@@ -526,7 +607,7 @@ const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
     },
     "5": {
       class_type: "CLIPTextEncode",
-      inputs: { text: `${referenceInstruction}\n${config.prompt}`, clip: ["3", 0] },
+      inputs: { text: withFlux2Detail(`${referenceInstruction}\n${config.prompt}`), clip: ["3", 0] },
     },
     "6": {
       class_type: "ConditioningZeroOut",
@@ -592,7 +673,59 @@ const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
 
   prompt["9"] = {
     class_type: "CFGGuider",
-    inputs: { model: ["2", 0], positive: conditioning, negative: ["6", 0], cfg: 1 },
+    inputs: { model: ["14", 0], positive: conditioning, negative: ["6", 0], cfg: 1 },
+  };
+  prompt["14"] = {
+    class_type: "LoraLoaderModelOnly",
+    inputs: { model: ["2", 0], lora_name: FLUX2_DETAIL_LORA, strength_model: FLUX2_DETAIL_STRENGTH },
+  };
+  prompt["90"] = {
+    class_type: "SeedVR2LoadVAEModel",
+    inputs: {
+      model: "ema_vae_fp16.safetensors",
+      device: "mps",
+      encode_tiled: true,
+      encode_tile_size: 768,
+      encode_tile_overlap: 96,
+      decode_tiled: true,
+      decode_tile_size: 768,
+      decode_tile_overlap: 96,
+      tile_debug: "false",
+      offload_device: "none",
+      cache_model: false,
+    },
+  };
+  prompt["91"] = {
+    class_type: "SeedVR2LoadDiTModel",
+    inputs: {
+      model: "seedvr2_ema_7b-Q4_K_M.gguf",
+      device: "mps",
+      blocks_to_swap: 0,
+      swap_io_components: false,
+      offload_device: "none",
+      cache_model: false,
+      attention_mode: "sdpa",
+    },
+  };
+  prompt["92"] = {
+    class_type: "SeedVR2VideoUpscaler",
+    inputs: {
+      seed: randomSeed32(),
+      resolution: seedResolution,
+      max_resolution: seedMaxResolution,
+      batch_size: 1,
+      uniform_batch_size: false,
+      color_correction: "lab",
+      temporal_overlap: 0,
+      prepend_frames: 0,
+      input_noise_scale: 0.1,
+      latent_noise_scale: 0,
+      offload_device: "none",
+      enable_debug: false,
+      image: ["13", 0],
+      dit: ["91", 0],
+      vae: ["90", 0],
+    },
   };
 
   const createResponse = await fetch(`${baseUrl}/prompt`, {
