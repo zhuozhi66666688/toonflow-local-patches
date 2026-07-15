@@ -121,8 +121,8 @@ const moodyImageRequest = async (config: ImageConfig): Promise<string> => {
   let height = landscape ? roundTo16((longSide * ratioHeight) / ratioWidth) : longSide;
   if (isTurnaround) {
     width = Math.max(longSide, 768);
-    // Give four vertical panels enough horizontal room; 2:1 often collapses into a triptych.
-    height = roundTo16(width * 0.375);
+    // Keep the original workflow's 2:1 canvas; wider ratios cause washed-out SeedVR2 panels.
+    height = roundTo16(width * 0.5);
     seedResolution = Math.max(seedResolution, 1152);
     seedMaxResolution = Math.max(seedMaxResolution, 2304);
   }
