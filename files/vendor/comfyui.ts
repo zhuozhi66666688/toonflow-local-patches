@@ -85,6 +85,7 @@ const vendor: VendorConfig = {
   },
   models: [
     { name: "Moody ZIB+ZIT Local", modelName: "moody-zib-zit-local", type: "image", mode: ["text"] },
+    { name: "FLUX2 Klein 9B Text Local", modelName: "flux2-klein-9b-text-local", type: "image", mode: ["text"] },
     { name: "FLUX2 Klein 9B Reference Local", modelName: "flux2-klein-9b-reference-local", type: "image", mode: ["singleImage", "multiReference"] },
   ],
 };
@@ -365,6 +366,121 @@ const moodyImageRequest = async (config: ImageConfig): Promise<string> => {
   return await urlToBase64(result.data);
 };
 
+const flux2KleinTextRequest = async (config: ImageConfig): Promise<string> => {
+  const baseUrl = vendor.inputValues.baseUrl.replace(/\/+$/, "");
+
+  const ratioParts = String(config.aspectRatio || "1:1").split(":").map(Number);
+  const ratioWidth = ratioParts[0] > 0 ? ratioParts[0] : 1;
+  const ratioHeight = ratioParts[1] > 0 ? ratioParts[1] : 1;
+  const longSideMap: Record<string, number> = { "1K": 1024, "2K": 1280, "4K": 1536 };
+  const longSide = longSideMap[config.size] || 1024;
+  const roundTo16 = (value: number) => Math.max(512, Math.round(value / 16) * 16);
+  const landscape = ratioWidth >= ratioHeight;
+  const width = landscape ? longSide : roundTo16((longSide * ratioWidth) / ratioHeight);
+  const height = landscape ? roundTo16((longSide * ratioHeight) / ratioWidth) : longSide;
+  const steps = 4;
+  const randomSeed = () => Math.floor(Math.random() * 9007199254740990);
+
+  const prompt: Record<string, any> = {
+    "1": {
+      class_type: "SaveImage",
+      inputs: { filename_prefix: "ToonFlow/flux2-klein-9b-text", images: ["13", 0] },
+    },
+    "2": {
+      class_type: "UNETLoader",
+      inputs: { unet_name: "flux-2-klein-9b-fp8.safetensors", weight_dtype: "default" },
+    },
+    "3": {
+      class_type: "CLIPLoader",
+      inputs: { clip_name: "qwen_3_8b_fp8mixed.safetensors", type: "flux2", device: "default" },
+    },
+    "4": {
+      class_type: "VAELoader",
+      inputs: { vae_name: "flux2-vae.safetensors" },
+    },
+    "5": {
+      class_type: "CLIPTextEncode",
+      inputs: { text: config.prompt, clip: ["3", 0] },
+    },
+    "6": {
+      class_type: "ConditioningZeroOut",
+      inputs: { conditioning: ["5", 0] },
+    },
+    "7": {
+      class_type: "EmptyFlux2LatentImage",
+      inputs: { width, height, batch_size: 1 },
+    },
+    "8": {
+      class_type: "RandomNoise",
+      inputs: { noise_seed: randomSeed() },
+    },
+    "9": {
+      class_type: "CFGGuider",
+      inputs: { model: ["2", 0], positive: ["5", 0], negative: ["6", 0], cfg: 1 },
+    },
+    "10": {
+      class_type: "KSamplerSelect",
+      inputs: { sampler_name: "euler" },
+    },
+    "11": {
+      class_type: "Flux2Scheduler",
+      inputs: { steps, width, height },
+    },
+    "12": {
+      class_type: "SamplerCustomAdvanced",
+      inputs: {
+        noise: ["8", 0],
+        guider: ["9", 0],
+        sampler: ["10", 0],
+        sigmas: ["11", 0],
+        latent_image: ["7", 0],
+      },
+    },
+    "13": {
+      class_type: "VAEDecode",
+      inputs: { samples: ["12", 0], vae: ["4", 0] },
+    },
+  };
+
+  const createResponse = await fetch(`${baseUrl}/prompt`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, client_id: `toonflow-flux2-text-${Date.now()}` }),
+  });
+  if (!createResponse.ok) throw new Error(`ComfyUI 创建 FLUX2 文生图任务失败: ${await createResponse.text()}`);
+  const createData = await createResponse.json();
+  if (!createData.prompt_id) throw new Error("ComfyUI 未返回 prompt_id");
+
+  const result = await pollTask(
+    async (): Promise<PollResult> => {
+      const historyResponse = await fetch(`${baseUrl}/history/${createData.prompt_id}`);
+      if (!historyResponse.ok) throw new Error(`ComfyUI 查询 FLUX2 文生图任务失败: ${await historyResponse.text()}`);
+      const history = await historyResponse.json();
+      const task = history[createData.prompt_id];
+      if (!task) return { completed: false };
+      if (task.status?.status_str === "error") {
+        const message = task.status?.messages?.find((item: any[]) => item[0] === "execution_error")?.[1]?.exception_message;
+        return { completed: true, error: message || "FLUX2 Klein 9B 文生图失败" };
+      }
+      const images = Object.values(task.outputs || {}).flatMap((output: any) => output.images || []);
+      if (!images.length) return { completed: false };
+      const image = images[0] as any;
+      const query = [
+        `filename=${encodeURIComponent(image.filename)}`,
+        `subfolder=${encodeURIComponent(image.subfolder || "")}`,
+        `type=${encodeURIComponent(image.type || "output")}`,
+      ].join("&");
+      return { completed: true, data: `${baseUrl}/view?${query}` };
+    },
+    1500,
+    1800000,
+  );
+
+  if (result.error) throw new Error(result.error);
+  if (!result.data) throw new Error("ComfyUI 未返回 FLUX2 文生图图片");
+  return await urlToBase64(result.data);
+};
+
 const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
   const baseUrl = vendor.inputValues.baseUrl.replace(/\/+$/, "");
   const references = (config.referenceList || [])
@@ -519,6 +635,9 @@ const flux2KleinImageRequest = async (config: ImageConfig): Promise<string> => {
 };
 
 const imageRequest = async (config: ImageConfig, model: ImageModel): Promise<string> => {
+  if (model.modelName === "flux2-klein-9b-text-local") {
+    return await flux2KleinTextRequest(config);
+  }
   if (model.modelName === "flux2-klein-9b-reference-local") {
     return await flux2KleinImageRequest(config);
   }
