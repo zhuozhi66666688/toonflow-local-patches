@@ -1,0 +1,17 @@
+INSERT OR REPLACE INTO o_agentDeploy VALUES(1,'Planner Best + Claude KR Auto','scriptAgent','9router:planner-best-claude-kr-auto','9router','用于读取原文生成故事骨架、改编策略，建议使用具备强大文本理解和生成能力的模型','剧本Agent',NULL,NULL,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(2,'Planner Best + Claude KR Auto','productionAgent','9router:planner-best-claude-kr-auto','9router','对工作流进行调度和管理，建议使用具备较强的逻辑推理和任务管理能力的模型','生产Agent',NULL,NULL,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(3,'Planner Best + Claude KR Auto','universalAi','9router:planner-best-claude-kr-auto','9router','用于小说事件提取、资产提示词生成、台词提取等边缘功能，建议使用具备较强文本处理能力的模型','通用AI',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(4,'','ttsDubbing','',NULL,'根据剧本内容生成角色配音，支持多种声音风格和情绪','TTS配音',NULL,NULL,1,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(5,'Planner Best + Claude KR Auto','scriptAgent:decisionAgent','9router:planner-best-claude-kr-auto','9router','决策层','剧本Agent:决策层',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(6,'Planner Best + Claude KR Auto','scriptAgent:supervisionAgent','9router:planner-best-claude-kr-auto','9router','监督层','剧本Agent:监督层',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(7,'Planner Best + Claude KR Auto','scriptAgent:storySkeletonAgent','9router:planner-best-claude-kr-auto','9router','故事骨架生成','剧本Agent:故事骨架',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(8,'Planner Best + Claude KR Auto','scriptAgent:adaptationStrategyAgent','9router:planner-best-claude-kr-auto','9router','改编策略生成','剧本Agent:改编策略',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(9,'Planner Best + Claude KR Auto','scriptAgent:scriptAgent','9router:planner-best-claude-kr-auto','9router','剧本生成','剧本Agent:剧本生成',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(10,'Planner Best + Claude KR Auto','productionAgent:decisionAgent','9router:planner-best-claude-kr-auto','9router','决策层','生产Agent:决策层',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(11,'Planner Best + Claude KR Auto','productionAgent:supervisionAgent','9router:planner-best-claude-kr-auto','9router','监督层','生产Agent:监督层',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(12,'Planner Best + Claude KR Auto','productionAgent:deriveAssetsAgent','9router:planner-best-claude-kr-auto','9router','衍生资产','生产Agent:衍生资产',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(13,'Planner Best + Claude KR Auto','productionAgent:generateAssetsAgent','9router:planner-best-claude-kr-auto','9router','生成资产','生产Agent:生成资产',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(14,'Planner Best + Claude KR Auto','productionAgent:directorPlanAgent','9router:planner-best-claude-kr-auto','9router','导演规划','生产Agent:导演规划',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(15,'Planner Best + Claude KR Auto','productionAgent:storyboardGenAgent','9router:planner-best-claude-kr-auto','9router','分镜生成','生产Agent:分镜生成',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(16,'Planner Best + Claude KR Auto','productionAgent:storyboardPanelAgent','9router:planner-best-claude-kr-auto','9router','分镜面板生成','生产Agent:分镜面板',1,0,0,NULL);
+INSERT OR REPLACE INTO o_agentDeploy VALUES(17,'Planner Best + Claude KR Auto','productionAgent:storyboardTableAgent','9router:planner-best-claude-kr-auto','9router','分镜表格生成','生产Agent:分镜表格',1,0,0,NULL);

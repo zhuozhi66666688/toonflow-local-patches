@@ -1,0 +1,10 @@
+INSERT OR REPLACE INTO o_setting VALUES('messagesPerSummary','10.0');
+INSERT OR REPLACE INTO o_setting VALUES('shortTermLimit','5.0');
+INSERT OR REPLACE INTO o_setting VALUES('summaryMaxLength','500.0');
+INSERT OR REPLACE INTO o_setting VALUES('summaryLimit','10.0');
+INSERT OR REPLACE INTO o_setting VALUES('ragLimit','3.0');
+INSERT OR REPLACE INTO o_setting VALUES('deepRetrieveSummaryLimit','5.0');
+INSERT OR REPLACE INTO o_setting VALUES('modelOnnxFile','["all-MiniLM-L6-v2", "onnx", "model_fp16.onnx"]');
+INSERT OR REPLACE INTO o_setting VALUES('modelDtype','fp16');
+INSERT OR REPLACE INTO o_setting VALUES('switchAiDevTool','0');
+INSERT OR REPLACE INTO o_setting VALUES('agentUseMode','1');

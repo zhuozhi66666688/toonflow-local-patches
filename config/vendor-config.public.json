@@ -1,0 +1,218 @@
+[
+  {
+    "id": "9router",
+    "inputValues": {
+      "baseUrl": "http://127.0.0.1:20129/v1"
+    },
+    "models": [
+      {
+        "name": "Claude KR",
+        "modelName": "claude_kr",
+        "type": "text",
+        "think": false
+      },
+      {
+        "name": "Planner Best",
+        "modelName": "planner-best",
+        "type": "text",
+        "think": true
+      },
+      {
+        "name": "Planner Best + Claude KR Auto",
+        "modelName": "planner-best-claude-kr-auto",
+        "type": "text",
+        "think": true
+      },
+      {
+        "name": "Executor Mid",
+        "modelName": "executor-mid",
+        "type": "text",
+        "think": false
+      },
+      {
+        "name": "Claude DeepSeek",
+        "modelName": "claude-deepsek",
+        "type": "text",
+        "think": true
+      },
+      {
+        "name": "Claude DeepSeek Tool Required",
+        "modelName": "claude-deepsek-tool-required",
+        "type": "text",
+        "think": true
+      }
+    ],
+    "enable": 1
+  },
+  {
+    "id": "9router-video",
+    "inputValues": {
+      "baseUrl": "https://bafang.me/v1"
+    },
+    "models": [
+      {
+        "name": "Grok Imagine Video 1.5 720p",
+        "modelName": "grok-imagine-video-1.5-720p",
+        "type": "video",
+        "mode": [
+          "singleImage"
+        ],
+        "audio": false,
+        "durationResolutionMap": [
+          {
+            "duration": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "resolution": [
+              "720P"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Grok Imagine Video 1.5 1080p",
+        "modelName": "grok-imagine-video-1.5-1080p",
+        "type": "video",
+        "mode": [
+          "singleImage"
+        ],
+        "audio": false,
+        "durationResolutionMap": [
+          {
+            "duration": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "resolution": [
+              "1080P"
+            ]
+          }
+        ]
+      }
+    ],
+    "enable": 1
+  },
+  {
+    "id": "atlascloud",
+    "inputValues": {},
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "comfyui",
+    "inputValues": {
+      "baseUrl": "http://127.0.0.1:8188"
+    },
+    "models": [
+      {
+        "name": "Moody ZIB+ZIT Local",
+        "modelName": "moody-zib-zit-local",
+        "type": "image",
+        "mode": [
+          "text"
+        ]
+      }
+    ],
+    "enable": 1
+  },
+  {
+    "id": "deepseek",
+    "inputValues": {
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "models": [],
+    "enable": 1
+  },
+  {
+    "id": "grsai",
+    "inputValues": {
+      "baseUrl": "https://grsai.dakka.com.cn"
+    },
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "klingai",
+    "inputValues": {},
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "minimax",
+    "inputValues": {},
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "null",
+    "inputValues": {
+      "baseUrl": "http://127.0.0.1:20128/v1"
+    },
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "openai",
+    "inputValues": {
+      "baseUrl": "http://127.0.0.1:20128/v1"
+    },
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "toonflow",
+    "inputValues": {},
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "vidu",
+    "inputValues": {},
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "volcengine",
+    "inputValues": {},
+    "models": [],
+    "enable": 0
+  },
+  {
+    "id": "volcengineSd2",
+    "inputValues": {
+      "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+      "groupId": "",
+      "tosEndpoint": "",
+      "tosBucket": ""
+    },
+    "models": [],
+    "enable": 0
+  }
+]

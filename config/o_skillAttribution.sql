@@ -1,0 +1,14 @@
+INSERT OR REPLACE INTO o_skillAttribution VALUES('52c51fa8655f899a1b7aae9b6aad7251','universal_agent.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('6d46cdca10b2f49e07e515885d1387a0','universal_agent.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('1864df75d1d65f76e275046649ecaef8','universal_agent.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('3e5efec258c8d8e6a39bcef12f8ee058','universal_agent.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('7fbce6f90d7d85496ba9817e9622e640','universal_agent.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('31fb5c5a1f514ec1e66b4eba9f22d4db','script_agent_decision.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('27dc2dfc901de2180227d0269217583a','script_agent_execution.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('d49fa09504fe784a8e6eb102756c6d56','script_agent_execution.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('797906c2ddf0750f050bcdeae23eae3d','script_agent_execution.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('1abd8675c0c3e62b20c0b151d2ec0fb1','script_agent_execution.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('0b7828d7a6ab458a4b201122f08d6c16','script_agent_supervision.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('5c1772b5f9c420d9eae9ca02914ba087','production_agent_decision.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('75a45cf996015ca819582873887ec301','production_agent_execution.md');
+INSERT OR REPLACE INTO o_skillAttribution VALUES('fce75f69d704c19bebcb356bc1bd6e81','production_agent_execution.md');
