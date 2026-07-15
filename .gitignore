@@ -4,3 +4,5 @@
 local-backups/
 private/
 
+
+files/comfyui-patches/__pycache__/
