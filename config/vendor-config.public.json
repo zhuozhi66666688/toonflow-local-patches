@@ -140,7 +140,7 @@
         ]
       },
       {
-        "name": "FLUX2 Klein 9B Detail Text Local",
+        "name": "FLUX2 Klein 9B Text Local",
         "modelName": "flux2-klein-9b-text-local",
         "type": "image",
         "mode": [
@@ -148,7 +148,7 @@
         ]
       },
       {
-        "name": "FLUX2 Klein 9B Detail Reference Local",
+        "name": "FLUX2 Klein 9B Reference Local",
         "modelName": "flux2-klein-9b-reference-local",
         "type": "image",
         "mode": [
